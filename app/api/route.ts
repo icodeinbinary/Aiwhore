@@ -135,6 +135,8 @@ async function getTranscript(input: string | File) {
 		const { text } = await groq.audio.transcriptions.create({
 			file: input,
 			model: "whisper-large-v3",
+			language: "hi",
+			
 		});
 
 		return text.trim() || null;

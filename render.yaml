@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: swift-nextjs-app
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: GROQ_API_KEY
+        sync: false
+      - key: ELEVENLABS_API_KEY
+        sync: false
+      - key: XAI_API_KEY
+        sync: false
+    plan: free 

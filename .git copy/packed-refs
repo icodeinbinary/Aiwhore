@@ -1,0 +1,4 @@
+# pack-refs with: peeled fully-peeled sorted 
+5afdb8ef79e4adca9385b359e8bbbf1a5e9ade14 refs/remotes/origin/cartesia-ws
+ac5234bb3d6775c85bfd68cb34b6c559c303098d refs/remotes/origin/embedding
+13b8feca22e12b96bcae8954c1aee69028b6a645 refs/remotes/origin/main
